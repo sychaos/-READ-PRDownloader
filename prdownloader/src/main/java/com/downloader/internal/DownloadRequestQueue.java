@@ -44,6 +44,7 @@ public class DownloadRequestQueue {
     }
 
     public static DownloadRequestQueue getInstance() {
+        // 单例模式标准写法
         if (instance == null) {
             synchronized (DownloadRequestQueue.class) {
                 if (instance == null) {
@@ -103,6 +104,7 @@ public class DownloadRequestQueue {
         }
     }
 
+    // 简单暴力 非常真实
     public void cancelAll() {
         for (Map.Entry<Integer, DownloadRequest> currentRequestMapEntry : currentRequestMap.entrySet()) {
             DownloadRequest request = currentRequestMapEntry.getValue();
@@ -118,10 +120,17 @@ public class DownloadRequestQueue {
         return Status.UNKNOWN;
     }
 
+    // TODO 看看调用链
     public void addRequest(DownloadRequest request) {
+        // 维护一个Map正在运行的request的map
         currentRequestMap.put(request.getDownloadId(), request);
+        // 改变状态为Status.QUEUED
         request.setStatus(Status.QUEUED);
+        // 队列
         request.setSequenceNumber(getSequenceNumber());
+        // 首先 Core.getInstance().getExecutorSupplier().forDownloadTasks()是一种线程池
+        // new DownloadRunnable(request)是个runnable
+        // 返回的future set一下
         request.setFuture(Core.getInstance()
                 .getExecutorSupplier()
                 .forDownloadTasks()

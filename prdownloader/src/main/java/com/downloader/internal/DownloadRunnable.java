@@ -34,7 +34,9 @@ public class DownloadRunnable implements Runnable {
 
     DownloadRunnable(DownloadRequest request) {
         this.request = request;
+        // TODO priority 看看怎么用的
         this.priority = request.getPriority();
+        // TODO sequence 看看怎么用的
         this.sequence = request.getSequenceNumber();
     }
 

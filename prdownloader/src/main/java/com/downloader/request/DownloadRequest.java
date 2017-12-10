@@ -48,7 +48,9 @@ public class DownloadRequest {
     private Future future;
     private long downloadedBytes;
     private long totalBytes;
+    // 这是啥 TODO
     private int readTimeout;
+    // 这是啥 TODO
     private int connectTimeout;
     private String userAgent;
     private OnProgressListener onProgressListener;
@@ -221,13 +223,16 @@ public class DownloadRequest {
         return this;
     }
 
+    // TODO
     public int start(OnDownloadListener onDownloadListener) {
         this.onDownloadListener = onDownloadListener;
+        // url，dirPath，fileName的md5加密作为id
         downloadId = Utils.getUniqueId(url, dirPath, fileName);
         DownloadRequestQueue.getInstance().addRequest(this);
         return downloadId;
     }
 
+    // 失败 回调思密达
     public void deliverError(final Error error) {
         if (status != Status.CANCELLED) {
             Core.getInstance().getExecutorSupplier().forMainThreadTasks()
@@ -242,6 +247,7 @@ public class DownloadRequest {
         }
     }
 
+    // 成功 回调思密达
     public void deliverSuccess() {
         if (status != Status.CANCELLED) {
             setStatus(Status.COMPLETED);
@@ -270,6 +276,7 @@ public class DownloadRequest {
         }
     }
 
+    // 暂停 回调思密达
     public void deliverPauseEvent() {
         if (status != Status.CANCELLED) {
             Core.getInstance().getExecutorSupplier().forMainThreadTasks()
@@ -283,6 +290,7 @@ public class DownloadRequest {
         }
     }
 
+    // 暂停 回调思密达
     private void deliverCancelEvent() {
         Core.getInstance().getExecutorSupplier().forMainThreadTasks()
                 .execute(new Runnable() {
@@ -297,6 +305,7 @@ public class DownloadRequest {
     public void cancel() {
         status = Status.CANCELLED;
         if (future != null) {
+            // TODO 看到了吗 大爷！！
             future.cancel(true);
         }
         deliverCancelEvent();

@@ -25,6 +25,7 @@ import java.util.concurrent.Executor;
  * Created by amitshekhar on 13/11/17.
  */
 
+// 一百年不会变得。。MainThread MDZZ
 public class MainThreadExecutor implements Executor {
 
     private final Handler handler = new Handler(Looper.getMainLooper());

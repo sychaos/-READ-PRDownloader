@@ -66,10 +66,12 @@ public class DownloadTask {
         return new DownloadTask(request);
     }
 
+    // TODO 重点在哪里啊 重点在这里
     Response run() {
 
         Response response = new Response();
 
+        // 如果为CANCELLED或者PAUSED直接返回
         if (request.getStatus() == Status.CANCELLED) {
             response.setCancelled(true);
             return response;
@@ -83,7 +85,7 @@ public class DownloadTask {
         FileDescriptor fileDescriptor = null;
 
         try {
-
+            // 有说法 TODO
             if (request.getOnProgressListener() != null) {
                 progressHandler = new ProgressHandler(request.getOnProgressListener());
             }
@@ -91,7 +93,7 @@ public class DownloadTask {
             tempPath = Utils.getTempPath(request.getDirPath(), request.getFileName());
 
             File file = new File(tempPath);
-
+            //从db中获取进度
             DownloadModel model = getDownloadModelIfAlreadyPresentInDatabase();
 
             if (model != null) {
@@ -105,7 +107,7 @@ public class DownloadTask {
                     model = null;
                 }
             }
-
+            // 自己组装httpClient 可以考虑解耦 TODO。。。
             httpClient = ComponentHolder.getInstance().getHttpClient();
 
             httpClient.connect(request);
@@ -124,6 +126,7 @@ public class DownloadTask {
 
             eTag = httpClient.getResponseHeader(Constants.ETAG);
 
+            // TODO 并不太懂 应该是曾经下载过但已经失效的文件 清空
             if (checkIfFreshStartRequiredAndStart(model)) {
                 model = null;
             }
@@ -143,6 +146,7 @@ public class DownloadTask {
                 deleteTempFile();
             }
 
+            // 第一次下载情况下
             if (totalBytes == 0) {
                 totalBytes = httpClient.getContentLength();
                 request.setTotalBytes(totalBytes);
@@ -202,11 +206,12 @@ public class DownloadTask {
                 sendProgress();
 
                 syncIfRequired(outputStream, fileDescriptor);
-
+                // 循环写入，如果期间状态改变！！！ 你懂的
                 if (request.getStatus() == Status.CANCELLED) {
                     response.setCancelled(true);
                     return response;
                 } else if (request.getStatus() == Status.PAUSED) {
+                    // TODO 你是谁
                     sync(outputStream, fileDescriptor);
                     response.setPaused(true);
                     return response;
@@ -215,7 +220,7 @@ public class DownloadTask {
             } while (true);
 
             final String path = Utils.getPath(request.getDirPath(), request.getFileName());
-
+            // 其实是有temp文件的
             Utils.renameFileName(tempPath, path);
 
             response.setSuccessful(true);

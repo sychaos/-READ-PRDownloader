@@ -49,6 +49,8 @@ public class ComponentHolder {
         this.connectTimeout = config.getConnectTimeout();
         this.userAgent = config.getUserAgent();
         this.httpClient = config.getHttpClient();
+        // 是否允许数据库储存。。。NoOpsDbHelper是空的啊亲人。。。是的就是这样
+        // 感觉这个操作可以借鉴
         this.dbHelper = config.isDatabaseEnabled() ? new AppDbHelper(context) : new NoOpsDbHelper();
         if (config.isDatabaseEnabled()) {
             PRDownloader.cleanUp(30);
