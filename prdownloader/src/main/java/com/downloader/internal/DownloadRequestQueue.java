@@ -120,7 +120,7 @@ public class DownloadRequestQueue {
         return Status.UNKNOWN;
     }
 
-    // TODO 看看调用链
+    // 看看调用链
     public void addRequest(DownloadRequest request) {
         // 维护一个Map正在运行的request的map
         currentRequestMap.put(request.getDownloadId(), request);

@@ -66,7 +66,7 @@ public class DownloadTask {
         return new DownloadTask(request);
     }
 
-    // TODO 重点在哪里啊 重点在这里
+    // 重点在哪里啊 重点在这里
     Response run() {
 
         Response response = new Response();
@@ -85,7 +85,7 @@ public class DownloadTask {
         FileDescriptor fileDescriptor = null;
 
         try {
-            // 有说法 TODO
+            // 有说法 ProgressHandler是持有主线程Looper的handler负责发送progress
             if (request.getOnProgressListener() != null) {
                 progressHandler = new ProgressHandler(request.getOnProgressListener());
             }
@@ -96,22 +96,29 @@ public class DownloadTask {
             //从db中获取进度
             DownloadModel model = getDownloadModelIfAlreadyPresentInDatabase();
 
+            // 如果读到了model
             if (model != null) {
+                // 并且缓存文件还在
                 if (file.exists()) {
+                    // 设置request
                     request.setTotalBytes(model.getTotalBytes());
                     request.setDownloadedBytes(model.getDownloadedBytes());
                 } else {
+                    // 不在的话就删掉db中的记录
+                    // 设置request
                     removeNoMoreNeededModelFromDatabase();
                     request.setDownloadedBytes(0);
                     request.setTotalBytes(0);
                     model = null;
                 }
             }
-            // 自己组装httpClient 可以考虑解耦 TODO。。。
+            // 大神组装httpClient
+            // TODO 可以考虑解耦
             httpClient = ComponentHolder.getInstance().getHttpClient();
-
+            //发请求了！！
             httpClient.connect(request);
 
+            //其实不是很懂为什么在这里又有一个
             if (request.getStatus() == Status.CANCELLED) {
                 response.setCancelled(true);
                 return response;
@@ -120,28 +127,30 @@ public class DownloadTask {
                 return response;
             }
 
+            //  TODO 并不太懂 看名字大概就是重定向之类的东西
             httpClient = Utils.getRedirectedConnectionIfAny(httpClient, request);
 
             responseCode = httpClient.getResponseCode();
 
             eTag = httpClient.getResponseHeader(Constants.ETAG);
 
-            // TODO 并不太懂 应该是曾经下载过但已经失效的文件 清空
+            //处理曾经下载过但已经失效的文件
             if (checkIfFreshStartRequiredAndStart(model)) {
                 model = null;
             }
-
+            // 判断code
             if (!isSuccessful()) {
                 Error error = new Error();
                 error.setServerError(true);
                 response.setError(error);
                 return response;
             }
-
+            // isResumeSupported 支持断点续传 我靠这个名字不如叫 zcddxc
             setResumeSupportedOrNot();
 
             totalBytes = request.getTotalBytes();
 
+            // 缓存文件删除
             if (!isResumeSupported) {
                 deleteTempFile();
             }
@@ -152,10 +161,12 @@ public class DownloadTask {
                 request.setTotalBytes(totalBytes);
             }
 
+            // 存db
             if (isResumeSupported && model == null) {
                 createAndInsertNewModel();
             }
 
+            // 继续。。。
             if (request.getStatus() == Status.CANCELLED) {
                 response.setCancelled(true);
                 return response;
@@ -164,10 +175,12 @@ public class DownloadTask {
                 return response;
             }
 
+            // 开始任务的回调
             request.deliverStartEvent();
 
             inputStream = httpClient.getInputStream();
 
+            // 每次读4m
             byte[] buff = new byte[BUFFER_SIZE];
 
             if (!file.exists()) {
@@ -180,9 +193,11 @@ public class DownloadTask {
             outputStream = new BufferedOutputStream(new FileOutputStream(randomAccess.getFD()));
 
             if (isResumeSupported && request.getDownloadedBytes() != 0) {
+                // 设置写入位置
                 randomAccess.seek(request.getDownloadedBytes());
             }
 
+            // 嗯。。。
             if (request.getStatus() == Status.CANCELLED) {
                 response.setCancelled(true);
                 return response;
@@ -203,15 +218,16 @@ public class DownloadTask {
 
                 request.setDownloadedBytes(request.getDownloadedBytes() + byteCount);
 
+                // 其实是读一段outputStream就发送一次progress
                 sendProgress();
 
                 syncIfRequired(outputStream, fileDescriptor);
-                // 循环写入，如果期间状态改变！！！ 你懂的
+                // 循环写入，如果期间状态改变！！！直接return 你懂的
                 if (request.getStatus() == Status.CANCELLED) {
                     response.setCancelled(true);
                     return response;
                 } else if (request.getStatus() == Status.PAUSED) {
-                    // TODO 你是谁
+                    //  sync中触发了一次磁盘写入，getDownloadedBytes跟文件的进度不同
                     sync(outputStream, fileDescriptor);
                     response.setPaused(true);
                     return response;
@@ -233,13 +249,15 @@ public class DownloadTask {
             if (!isResumeSupported) {
                 deleteTempFile();
             }
+            // 这个error就不是severError了
             Error error = new Error();
             error.setConnectionError(true);
             response.setError(error);
         } finally {
+            // 关闭文件流
             closeAllSafely(outputStream, fileDescriptor);
         }
-
+        // 返回
         return response;
     }
 
@@ -262,6 +280,10 @@ public class DownloadTask {
 
     private boolean checkIfFreshStartRequiredAndStart(DownloadModel model) throws IOException,
             IllegalAccessException {
+        // 416的意思就是，设置的Range有误
+        // Range就是已经下载的byte 说出来你可能不信
+        // 所以意味着 资源已经失效了需要重下
+        // 该清清该删删
         if (responseCode == Constants.HTTP_RANGE_NOT_SATISFIABLE || isETagChanged(model)) {
             if (model != null) {
                 removeNoMoreNeededModelFromDatabase();

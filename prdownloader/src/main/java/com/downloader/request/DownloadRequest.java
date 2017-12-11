@@ -48,9 +48,7 @@ public class DownloadRequest {
     private Future future;
     private long downloadedBytes;
     private long totalBytes;
-    // 这是啥 TODO
     private int readTimeout;
-    // 这是啥 TODO
     private int connectTimeout;
     private String userAgent;
     private OnProgressListener onProgressListener;
@@ -223,7 +221,6 @@ public class DownloadRequest {
         return this;
     }
 
-    // TODO
     public int start(OnDownloadListener onDownloadListener) {
         this.onDownloadListener = onDownloadListener;
         // url，dirPath，fileName的md5加密作为id
@@ -305,7 +302,10 @@ public class DownloadRequest {
     public void cancel() {
         status = Status.CANCELLED;
         if (future != null) {
-            // TODO 看到了吗 大爷！！
+            // 看到了吗 大爷！！
+            // （1）future.cancel(mayInterruptIfRunning)的内部实现会是什么样子的？可以中断一个线程池里正在执行着的“那一个”任务。
+            // 可猜想，必定记录着具体线程标识，且发了一个中断信号。
+            //（2）猜测，应该只是发一个中断信号，可以中断阻塞中的操作。而如果是while(true); 这样的占用CPU的非阻塞式操作，是中断不掉的，也即线程依旧在跑，占用着线程池资源。
             future.cancel(true);
         }
         deliverCancelEvent();
