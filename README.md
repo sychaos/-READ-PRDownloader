@@ -17,6 +17,7 @@
                  一开始是进行db操作，判断文件是否已经下载
                  使用final String range = String.format(Locale.ENGLISH,"bytes=%d-", request.getDownloadedBytes());
                  connection.addRequestProperty(Constants.RANGE, range)指定下载的位置
+                 使用RandomAccessFile.seek方法指定文件写入的位置
                  当http请求返回code为416时意味着range错误，删除db内容，重新下载
                  当请求成功后进行io操作 每次读取4m到文件中，每次读取完使用progressHandler进行主线程的进度回调
                  每次写入后判断request的状态如果为CANCELLED或者PAUSED则调用            
@@ -24,6 +25,7 @@
                  fileDescriptor.sync();将最后读取的内容写入磁盘
                  
                  当request被标记为CANCELLED或者PAUSED时会调用future.cancel方法，该方法会终止线程，但并不会阻塞while（ture）中代码块的运行
+                 
   
   DefaultHttpClient - 封装的URLConnection
 
