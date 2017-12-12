@@ -1,11 +1,21 @@
 <p align="center">
-<img alt="PRDownloader" src=https://raw.githubusercontent.com/MindorksOpenSource/PRDownloader/master/assets/prdownloader.png />
-</p>
-TODO 差一个总结
+
 # PRDownloader - A file downloader library for Android with pause and resume support
 [![Mindorks](https://img.shields.io/badge/mindorks-opensource-blue.svg)](https://mindorks.com/open-source-projects)
 [![Mindorks Community](https://img.shields.io/badge/join-community-blue.svg)](https://mindorks.com/join-community)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+# 总结
+  仅对重点的类进行解析 
+  DownloadRequestQueue - 类如其名，维护downloadRequest的队列，currentRequestMap放置计划下载的downloadRequest
+  在resume和addRequest方法中使用Core.getInstance().getExecutorSupplier().forDownloadTasks().submit(new DownloadRunnable(request))
+  放置线程池中，返回值future保存在DownloadRequest中，方便日后操作。Core.getInstance().getExecutorSupplier().forDownloadTasks()是个线程池
+  
+  DownloadRunnable - 对Runnable进行封装通过DownloadTask.run返回的response状态回调
+  
+  DownloadTask - 维护下载信息的类 run方法为下载文件的方法，具体实现可以看这部分代码注释已加
+  
+  DefaultHttpClient - 封装的URLConnection
 
 ## Sample Download
 <img src=https://raw.githubusercontent.com/MindorksOpenSource/PRDownloader/master/assets/sample_download.png width=360 height=640 />
