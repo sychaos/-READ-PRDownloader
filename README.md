@@ -22,9 +22,10 @@
                  当请求成功后进行io操作 每次读取4m到文件中，每次读取完使用progressHandler进行主线程的进度回调
                  每次写入后判断request的状态如果为CANCELLED或者PAUSED则调用            
                  outputStream.flush();
-                 fileDescriptor.sync();将最后读取的内容写入磁盘
+                 fileDescriptor.sync();同步文件更新时间
                  
-                 当request被标记为CANCELLED或者PAUSED时会调用future.cancel方法，该方法会终止线程，但并不会阻塞while（ture）中代码块的运行
+                 当request被标记为CANCELLED或者PAUSED时会调用future.cancel方法，
+                 该方法会终止线程，但并不会IO阻塞中的运行
                  
   
   DefaultHttpClient - 封装的URLConnection
